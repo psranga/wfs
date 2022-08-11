@@ -1,7 +1,11 @@
 #include <iostream>
 #include <filesystem>
 #include <cstdint>
-#include <format>
+
+#if 0
+#define FMT_HEADER_ONLY
+#include "fmt/core.h"
+#endif
 
 extern "C" {
 #include <lua.h>
@@ -71,7 +75,15 @@ static int ncm_fs_hash_value(lua_State* L) {
 
 static int ncm_int_to_hex64(lua_State* L) {
   lua_Integer n = lua_tointeger(L, 1);
-  std::string s = std::format("{0:#08x}", n);
+  const char* digits = "0123456789abcdef";
+  std::string s("0123456789abcdef");
+
+  for (int i = 0; i < 16; ++i) {
+    lua_Integer q = n / 16;
+    lua_Integer r = n % 16;
+    s[15-i] = digits[r];
+    n = q;
+  }
 
   lua_pushstring(L, s.c_str());
 
@@ -82,7 +94,7 @@ static const struct luaL_Reg regns [] = {
   {"ncm_add1", ncm_add1},
   {"fs_space", ncm_fs_space},
   {"fs_hash_value", ncm_fs_hash_value},
-  {"ncm_int_to_hex64", ncm_int_to_hex64}
+  {"int_to_hex64", ncm_int_to_hex64},
   {NULL, NULL}  /* sentinel */
 };
 

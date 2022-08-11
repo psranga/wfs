@@ -106,8 +106,10 @@ function cm_reservefor(req) -- fn, cbegin, cend, pubsum, mysum)
 
   -- TODO: factor out into a function/module.
   local chunk_pfx = make_chunk_pfx(fn, cbegin, cend)
+  local preferred_fn = chunk_pfx .. '.r'
+
   local pdir = find_best_local_dir(csz, qosreq)
-  local block_fn = reserve_fallocate(pdir, csz)
+  local block_fn = reserve_fallocate(pdir, csz, preferred_fn)
   assert(filesize(block_fn) == csz)
 
   local r = {}
@@ -129,6 +131,7 @@ end
 
 function make_chunk_pfx(fn, cbegin, cend)
   local s = fn .. '-' .. int_to_hex64(cbegin) .. '-' .. int_to_hex64(cend)
+  return s
 end
 
 -- dn is a directory path.
@@ -148,4 +151,7 @@ end
 
 print(space_in_dir("/var"))
 print(ncmcpp.fs_hash_value("/var"))
+print(ncmcpp.int_to_hex64(64))
+print(ncmcpp.int_to_hex64(100))
+print(ncmcpp.int_to_hex64("100"))
 
