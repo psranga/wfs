@@ -4,6 +4,6 @@ rpath = /home/ranga/opt/gcc-12/x86_64/lib64
 cflags = -fPIC -shared -std=c++20
 
 rule cc12
-  command = gcc-12 -Wl,-rpath=$rpath -L$rpath $luaflags $cflags -o $out $in
+  command = g++-12 -Wl,-rpath=$rpath -L$rpath $luaflags $cflags -o $out $in
 
 build libncmcpp.so: cc12 ncm.cpp
