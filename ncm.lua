@@ -86,7 +86,10 @@ RESERVEFOR:
 --]]
 
 -- list of directories in which we can create files.
+local stdlib = require('stdlib')
+
 pdirs = {}
+blockids = {} -- mapping from blockid to underlying filename
 
 luaopen_ncmcpp = package.loadlib("/home/ranga/wip/wfs/libncmcpp.so", "luaopen_ncmcpp")
 ncmcpp = luaopen_ncmcpp()
