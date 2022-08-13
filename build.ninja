@@ -6,4 +6,11 @@ cflags = -fPIC -shared -std=c++20
 rule cc12
   command = g++-12 -Wl,-rpath=$rpath -L$rpath $luaflags $cflags -o $out $in
 
+rule run_ncmlua
+  command = lua ncm.lua | tee adhoc.done
+
 build libncmcpp.so: cc12 ncm.cpp
+
+build adhoc.done: run_ncmlua ncm.lua libncmcpp.so
+
+default adhoc.done
