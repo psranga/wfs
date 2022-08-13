@@ -78,6 +78,20 @@ int ncm_fs_hash_value(lua_State* L) {
   return 1;
 }
 
+int ncm_fs_file_size(lua_State* L) {
+  using std::filesystem::file_size;
+  using std::filesystem::path;
+
+  const char *pn = lua_tostring(L, 1);  // any path.
+  if (pn == 0) return 0;
+
+  const std::size_t l = file_size(path(pn));
+
+  lua_pushinteger(L, l);
+
+  return 1;
+}
+
 int ncm_int_to_hex64(lua_State* L) {
   lua_Integer n = lua_tointeger(L, 1);
   lua_pushstring(L, int_to_hex64(n).c_str());
@@ -120,6 +134,7 @@ int ncm_create_new_file(lua_State* L) {
 const struct luaL_Reg regns [] = {
   {"fs_space", ncm_fs_space},
   {"fs_hash_value", ncm_fs_hash_value},
+  {"fs_file_size", ncm_fs_file_size},
   {"int_to_hex64", ncm_int_to_hex64},
   {"create_new_file", ncm_create_new_file},
   {NULL, NULL}  /* sentinel */

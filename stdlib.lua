@@ -361,7 +361,8 @@ function dlogue(loc, level, ...)
      return  -- all disabled, and this is not explicitly enabled.
   end
 
-  local loc_str = loc
+  local loc_str
+  if loc == nil then loc_str = '<any>' else loc_str = loc end
   if type(loc) == 'table' then
     loc_str = join(loc, '.')
   end
@@ -748,4 +749,11 @@ end
 
 local M = {}
 M.dlog_snippet = dlog_snippet
+M.rep = rep
+M.dlog = dlog
+M.dlog1 = dlog1
+M.dlog2 = dlog2
+M.dlog4 = dlog4
+M.dlog6 = dlog6
+M.dlog8 = dlog8
 return M
