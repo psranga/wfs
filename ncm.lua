@@ -118,12 +118,15 @@ function cm_reservefor(req) -- fn, cbegin, cend, pubsum, mysum)
   local r = {}
   r.errno = 0
   r.blockid = block_fn
+  blockids[r.blockid] = block_fn
   return r
 end
 
 function reserve_fallocate(pdir, csz, preferred_fn)
   local block_fn = pdir .. '/' .. preferred_fn
-  local nbytes_allocd = ncmcpp.create_file(block_fn, csz)
+  local nbytes_allocd = ncmcpp.create_new_file(block_fn, csz)
+  if nbytes_allocd == nil then return nil end
+
   if nbytes_allocd >= csz then
     return block_fn
   else
@@ -168,7 +171,8 @@ function printt(val, checker)
     res = 'DONTCARE'
   end
   _printt_stats[res] = _printt_stats[res] + 1
-  print(val, '->', res)
+  print(stdlib.dlog_snippet(val), '->', res)
+  if res == 'PASS' then return true else return false end
 end
 
 printt(space_in_dir("/var"), function(x) return x > 0 end)
@@ -184,23 +188,26 @@ printt(ncmcpp.fs_hash_value(make_chunk_pfx('abcd.jpg', 0, 1024)))
 printt(ncmcpp.fs_hash_value(make_chunk_pfx('abcd.jpg', 0, 1023)))
 printt(ncmcpp.fs_hash_value(make_chunk_pfx('abce.jpg', 0, 1024)))
 
-local bytes_written = ncmcpp.create_file("/tmp/ac", 1048576)
-printt(bytes_written)
+local of = io.open("/tmp/ac", "wb")
+of:close()
 
-local block_id = reserve_fallocate("/tmp", 1048576, "ac")
-if block_id ~= nil then printt(block_id) else printt('error reserve_fallocate') end
+local bytes_written = ncmcpp.create_new_file("/tmp/ac", 1048576)
+printt(bytes_written, function(x) return x == nil end)
 
+os.remove("/tmp/ac")
 local block_id = reserve_fallocate("/tmp", 1048576, "ac")
 if block_id ~= nil then printt(block_id) else printt('error reserve_fallocate') end
 
 print('reservefor ......')
 pdirs = {'/tmp', '/var/tmp'}
-local r = cm_reservefor {fn="ac", cbegin=0, cend=1024*1024, pubsum='0', mysum='0', qosreq=''}
-if r ~= nil then
-  printt(r.errno, function(x) return x == 0 end)
-  printt(r.blockid, function(s) return #s > 0 end)
-else
-  printt('nil')
-end
+os.remove('/tmp/ac-0x0000000000000000-0x0000000000100000.r')
+
+printt(cm_reservefor{fn="ac", cbegin=0, cend=1024*1024, pubsum='0', mysum='0', qosreq=''},
+  function(r)
+    if r == nil then return false end
+    return printt(r.errno, function(x) return x == 0 end) and
+      printt(r.blockid, function(s) return #s > 0 end)
+  end
+)
 print('....... reservefor')
 assert(_printt_stats['FAIL'] == 0)

@@ -84,11 +84,18 @@ int ncm_int_to_hex64(lua_State* L) {
   return 1;
 }
 
-int ncm_create_file(lua_State* L) {
+int ncm_create_new_file(lua_State* L) {
   char buf[4096];
 
   const char* block_fn = lua_tostring(L, 1);
   std::size_t csz = lua_tointeger(L, 2);
+
+  // TODO: error if the file exists.
+  std::error_code ec;
+  const auto not_found_status =
+    std::filesystem::file_status(std::filesystem::file_type::not_found);
+  const auto fstatus = std::filesystem::status(block_fn, ec);
+  if (fstatus != not_found_status) return 0;
 
   auto ofs = std::ofstream(block_fn);
   std::size_t n = 0;
@@ -114,7 +121,7 @@ const struct luaL_Reg regns [] = {
   {"fs_space", ncm_fs_space},
   {"fs_hash_value", ncm_fs_hash_value},
   {"int_to_hex64", ncm_int_to_hex64},
-  {"create_file", ncm_create_file},
+  {"create_new_file", ncm_create_new_file},
   {NULL, NULL}  /* sentinel */
 };
 
