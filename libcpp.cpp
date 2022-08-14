@@ -17,35 +17,23 @@ extern "C" {
 #include <lualib.h>
 }
 
-namespace wfsint {
+namespace libcpp {
+namespace internal {
 
 std::string int_to_hex64(std::uint64_t n) {
-#if 1
   std::ostringstream os;
   os << "0x" << std::setbase(16) << std::setw(16) << std::setfill('0') << n << std::flush;
   return std::move(os.str());
-#else
-  const char* digits = "0123456789abcdef";
-  std::string s("0x0123456789abcdef");
-
-  for (int i = 0; i < 16; ++i) {
-    std::uint64_t q = n / 16;
-    std::uint64_t r = n % 16;
-    s.at(15+2-i) = digits[r];
-    n = q;
-  }
-
-  return std::move(s);
-#endif
 }
 
-} // namespace wfsint
+} // namespace internal
+} // namespace libcpp
 
-namespace wfslua {
+namespace libcpp {
 
-using namespace wfsint;
+using namespace internal;
 
-int ncm_fs_space(lua_State* L) {
+int fs_space(lua_State* L) {
   const char *dn = lua_tostring(L, 1);
   if (dn == 0) return 0;
 
@@ -67,7 +55,7 @@ int ncm_fs_space(lua_State* L) {
   return 1;
 }
 
-int ncm_fs_hash_value(lua_State* L) {
+int fs_hash_value(lua_State* L) {
   using std::filesystem::hash_value;
   using std::filesystem::path;
 
@@ -81,7 +69,7 @@ int ncm_fs_hash_value(lua_State* L) {
   return 1;
 }
 
-int ncm_fs_file_size(lua_State* L) {
+int fs_file_size(lua_State* L) {
   using std::filesystem::file_size;
   using std::filesystem::path;
 
@@ -95,7 +83,7 @@ int ncm_fs_file_size(lua_State* L) {
   return 1;
 }
 
-int ncm_fs_has_root_path(lua_State* L) {
+int fs_has_root_path(lua_State* L) {
   using std::filesystem::path;
 
   const char *pn = lua_tostring(L, 1);  // any path.
@@ -108,7 +96,7 @@ int ncm_fs_has_root_path(lua_State* L) {
   return 1;
 }
 
-int ncm_fs_root_path(lua_State* L) {
+int fs_root_path(lua_State* L) {
   using std::filesystem::path;
 
   const char *pn = lua_tostring(L, 1);  // any path.
@@ -120,7 +108,7 @@ int ncm_fs_root_path(lua_State* L) {
   return 1;
 }
 
-int ncm_fs_filename(lua_State* L) {
+int fs_filename(lua_State* L) {
   using std::filesystem::path;
 
   const char *pn = lua_tostring(L, 1);  // any path.
@@ -132,61 +120,27 @@ int ncm_fs_filename(lua_State* L) {
   return 1;
 }
 
-int ncm_int_to_hex64(lua_State* L) {
+int cpp_int_to_hex64(lua_State* L) {
   lua_Integer n = lua_tointeger(L, 1);
   lua_pushstring(L, int_to_hex64(n).c_str());
   return 1;
 }
 
-int ncm_create_new_file(lua_State* L) {
-  char buf[4096];
-
-  const char* block_fn = lua_tostring(L, 1);
-  std::size_t csz = lua_tointeger(L, 2);
-
-  // TODO: error if the file exists.
-  std::error_code ec;
-  const auto not_found_status =
-    std::filesystem::file_status(std::filesystem::file_type::not_found);
-  const auto fstatus = std::filesystem::status(block_fn, ec);
-  if (fstatus != not_found_status) return 0;
-
-  auto ofs = std::ofstream(block_fn);
-  std::size_t n = 0;
-
-  while (n < csz) {
-    std::size_t w = csz - n;
-    if (w > sizeof buf) {
-      w = sizeof buf;
-    }
-    if (!ofs) break;
-    ofs.write(buf, w);
-    if (!ofs) break;
-    n += w;
-  }
-
-  ofs.close();
-
-  lua_pushinteger(L, n);
-  return 1;
-}
-
 const struct luaL_Reg regns [] = {
-  {"fs_space", ncm_fs_space},
-  {"fs_hash_value", ncm_fs_hash_value},
-  {"fs_file_size", ncm_fs_file_size},
-  {"fs_has_root_path", ncm_fs_has_root_path},
-  {"fs_root_path", ncm_fs_root_path},
-  {"fs_filename", ncm_fs_filename},
-  {"int_to_hex64", ncm_int_to_hex64},
-  {"create_new_file", ncm_create_new_file},
+  {"fs_space", fs_space},
+  {"fs_hash_value", fs_hash_value},
+  {"fs_file_size", fs_file_size},
+  {"fs_has_root_path", fs_has_root_path},
+  {"fs_root_path", fs_root_path},
+  {"fs_filename", fs_filename},
+  {"cpp_int_to_hex64", cpp_int_to_hex64},
   {NULL, NULL}  /* sentinel */
 };
 
-} // namespace wfslua
+} // namespace libcpp
 
 extern "C" int luaopen_ncmcpp (lua_State *L) {
   lua_newtable(L);
-  luaL_setfuncs(L, wfslua::regns, 0);
+  luaL_setfuncs(L, libcpp::regns, 0);
   return 1;
 }
