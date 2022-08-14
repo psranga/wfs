@@ -12,8 +12,8 @@ rule run_lua
 build libncmcpp.so: cc12 ncm.cpp
 build libcpp.so: cc12 libcpp.cpp
 
-build testcm.done: run_lua testcm.lua libcpp.so
-  fn = testcm.lua
+build testlcm.done: run_lua testlcm.lua libcpp.so
+  fn = testlcm.lua
 
 build adhoc.done: run_lua adhoc.lua libcpp.so
   fn = adhoc.lua

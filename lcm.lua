@@ -8,8 +8,9 @@ local std = require('stdlib')
 
 local pdirs = {'/tmp', '/var/tmp'}
 local blockids = {} -- mapping from blockid to underlying filename
+local static = {}
 
-function cm_reservefor(req) -- fn, csz, csum, qosreq -> blockid
+function lcm_reservefor(req) -- fn, csz, csum, qosreq -> blockid
   local me = 'reservefor'
   local fn = req.fn
   local cbegin = req.cbegin
@@ -25,14 +26,14 @@ function cm_reservefor(req) -- fn, csz, csum, qosreq -> blockid
   if csz < 0 then return cm_error("bad args: cend <= cbegin") end
 
   -- TODO: factor out into a function/module.
-  local chunk_pfx = make_chunk_pfx(fn, cbegin, cend)
+  local chunk_pfx = static.make_chunk_pfx(fn, cbegin, cend)
   local preferred_fn = chunk_pfx .. '.r'
 
-  local pdir = find_best_local_dir(csz, qosreq)
+  local pdir = static.find_best_local_dir(csz, qosreq)
   if pdir == nil then return nil end
   dlog2(me, 'pdir: ', pdir)
 
-  local block_fn = reserve_fallocate(pdir, csz, preferred_fn)
+  local block_fn = static.reserve_fallocate(pdir, csz, preferred_fn)
   if block_fn == nil then return nil end
   -- assert(std.file_size(block_fn) == csz)
 
@@ -43,7 +44,7 @@ function cm_reservefor(req) -- fn, csz, csum, qosreq -> blockid
   return r
 end
 
-function cm_stage(req) -- blockid, csz, csum, data -> blockid
+function lcm_stage(req) -- blockid, csz, csum, data -> blockid
   local me = 'stage'
   local blockid = req.blockid
   local cbegin = req.cbegin
@@ -89,7 +90,7 @@ function cm_stage(req) -- blockid, csz, csum, data -> blockid
   return r
 end
 
-function cm_commitif(req) -- blockid, fn, csz, csum -> fn
+function lcm_commitif(req) -- blockid, fn, csz, csum -> fn
   function start_txn() end  -- TODO: actually do these.
   function end_txn() end
 
@@ -119,7 +120,7 @@ function cm_commitif(req) -- blockid, fn, csz, csum -> fn
   if reserved_fn == nil then return nil end
   if pdir == nil then return nil end
 
-  local chunk_pfx = make_chunk_pfx(fn, cbegin, cend)
+  local chunk_pfx = static.make_chunk_pfx(fn, cbegin, cend)
   -- avoid using any absolute paths as is from data structs.
   -- reconstruct any absolute paths using info saved from before.
   local orig_fn = pdir .. '/' .. reserved_fn  -- from cm_reservefor().
@@ -150,7 +151,9 @@ function cm_commitif(req) -- blockid, fn, csz, csum -> fn
   return r
 end
 
-function reserve_fallocate(pdir, csz, preferred_fn)
+-- static functions ----------------------------------------------
+-- TODO: look into why I prefer this to nested functions.
+function static.reserve_fallocate(pdir, csz, preferred_fn)
   local block_fn = pdir .. '/' .. preferred_fn
   dlog('falloc', 'block_fn: ', block_fn, ' csz: ', csz)
   local nbytes_allocd = std.cpp.create_new_file(block_fn, csz)
@@ -164,7 +167,7 @@ function reserve_fallocate(pdir, csz, preferred_fn)
   end
 end
 
-function find_best_local_dir(csz, qosreq)
+function static.find_best_local_dir(csz, qosreq)
   for i, cand_pdir in ipairs(pdirs) do
     local a = space_in_dir(cand_pdir)
     if a ~= nil and a > csz then return cand_pdir end
@@ -172,7 +175,7 @@ function find_best_local_dir(csz, qosreq)
   return nil
 end
 
-function make_chunk_pfx(fn, cbegin, cend)
+function static.make_chunk_pfx(fn, cbegin, cend)
   local s = fn .. '-' .. std.int_to_hex64(cbegin) .. '-' .. std.int_to_hex64(cend)
   return s
 end
@@ -180,8 +183,9 @@ end
 -- --------------------------------------------------------------------
 
 local M = {}
-M.cm_reservefor = cm_reservefor
-M.cm_stage = cm_stage
-M.cm_commitif = cm_commitif
-M.CmClient = CmClient
+-- lcm is an lcm.
+M.lcm_reservefor = lcm_reservefor
+M.lcm_stage = lcm_stage
+M.lcm_commitif = lcm_commitif
+
 return M

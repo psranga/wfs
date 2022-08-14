@@ -3,11 +3,10 @@ local printt = std.printt
 local dlog1 = std.dlog1
 local dlog2 = std.dlog2
 
-local cm = require('ncm')
-cm_reservefor = cm.cm_reservefor
-cm_stage = cm.cm_stage
-cm_commitif = cm.cm_commitif
-CmClient = cm.CmClient
+local cm = require('lcm')
+cm_reservefor = cm.lcm_reservefor
+cm_stage = cm.lcm_stage
+cm_commitif = cm.lcm_commitif
 
 --[[
 local wfs = require('wfs')
