@@ -14,7 +14,7 @@ function Lcm:new(req)
 
   local blockids = {} -- mapping from blockid to underlying filename
 
-  local o = {pdirs=pdirs, blockids=blockids}
+  local o = {pdirs=pdirs, blockids=blockids, rpcs={self.reservechunk, self.stagechunk, self.commitchunk}}
 
   self.__index = self
   return setmetatable(o, self)
