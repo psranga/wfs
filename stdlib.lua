@@ -801,17 +801,13 @@ function serialize (o)
 end
 
 function set_file_contents(lfn, data)
-  local me = 'setfc'
   assert(type(data) == 'string')
-  dlog(me, 'lfn: ', lfn, ' #data: ', #data)
   local fh = io.open(lfn, "wb")
   fh:write(data)
   fh:close()
 end
 
 function get_file_contents(lfn)
-  local me = 'getfc'
-  dlog(me, 'lfn: ', lfn)
   local fh = io.open(lfn, "rb")
   local data = fh:read('*all')
   fh:close()
