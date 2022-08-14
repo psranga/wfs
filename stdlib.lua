@@ -824,7 +824,7 @@ end
 
 -- =============================
 
-local lfn = path_join(cwd(), "libcpp.so")
+local lfn = path_join(cwd(), "out/libcpp.so")
 local luaopen_libcpp = package.loadlib(lfn, "luaopen_libcpp")
 if luaopen_libcpp == nil then
   print('Error opening shared library libcpp.so from: ', lfn)

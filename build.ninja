@@ -12,8 +12,8 @@ rule run_lua
 rule mkdirout
   command = mkdir -p out ; touch $out
 
-build libncmcpp.so: cc12 ncm.cpp
-build libcpp.so: cc12 libcpp.cpp
+build out/libncmcpp.so: cc12 ncm.cpp
+build out/libcpp.so: cc12 libcpp.cpp
 
 build out/00init.log: mkdirout
 build init: phony out/00init.log
