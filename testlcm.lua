@@ -8,22 +8,6 @@ cm_reservefor = cm.lcm_reservefor
 cm_stage = cm.lcm_stage
 cm_commitif = cm.lcm_commitif
 
---[[
-local wfs = require('wfs')
-wfs_upload_file = wfs.wfs_upload_file
-wfs_download_file = wfs.wfs_download_file
-wfs_stream_upload_file = wfs.wfs_stream_upload_file
-wfs_stream_download_file = wfs.wfs_stream_download_file
-
-local cmclient = CmClient:new()
-
-local buf = rep(rep('0123456789abcde\n', 100), 20)
-std.set_file_contents('/dev/shm/ad', buf)
-os.remove('/tmp/ax-0x0000000000000000-0x0000000000007d00')
-os.remove('/tmp/ax-0x0000000000000000-0x0000000000007d00.r')
-printt(wfs_upload_file(cmclient, '/dev/shm/ad', 'ax'), expect_true)
---]]
-
 printt(is_bare_filename('/dev/shm/ad'), expect_false)
 printt(is_bare_filename('ad'), expect_true)
 printt(std.cpp.fs_root_path('ad'), expect_string(''))
