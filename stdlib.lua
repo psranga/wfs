@@ -745,9 +745,127 @@ function list_find(l, needle)
   return nil
 end
 
+_printt_stats = {PASS=0, FAIL=0, DONTCARE=0}
+function printt(val, checker)
+  local res = 'PASS'
+  if checker then
+    if checker(val) ~= true then res = 'FAIL' end
+  else
+    if val == nil then res = 'FAIL' else res = 'DONTCARE' end
+  end
+  _printt_stats[res] = _printt_stats[res] + 1
+  print(dlog_snippet(val), '->', res)
+  if res == 'PASS' then return true, val else return false end
+end
+
+function expect_zero(r) if type(r) == 'number' and r == 0 then return true else return false end end
+function expect_one(r) if type(r) == 'number' and r == 1 then return true else return false end end
+function expect_false(r) if r == false then return true else return false end end
+function expect_true(r) if r == true then return true else return false end end
+function expect_string(s)
+  local checker = function(r)
+    if r == s then return true else return false end
+  end
+  return checker
+end
+function expect_int(n)
+  local checker = function(r)
+    if type(r) == 'number' and r == n then return true else return false end
+  end
+  return checker
+end
+
+function serialize (o)
+  local s
+	if type(o) == "number" then
+		s = '' .. o
+	elseif type(o) == "string" then
+		s = string.format("%q", o)
+	elseif type(o) == "table" then
+		s = "{\n"
+		for k,v in pairs(o) do
+      local quoted_k = string.format("%q", k)
+      local safe_k
+      if quoted_k == k then safe_k = k else safe_k = quoted_k  end
+
+			s = s .. "  " .. safe_k .. " = "
+			s = s .. serialize(v)
+			s = s .. ",\n"
+		end
+		s = s .. "}\n"
+	else
+		error("cannot serialize a " .. type(o))
+    s = nil
+	end
+  return s
+end
+
+function set_file_contents(lfn, data)
+  local me = 'setfc'
+  assert(type(data) == 'string')
+  dlog(me, 'lfn: ', lfn, ' #data: ', #data)
+  local fh = io.open(lfn, "wb")
+  fh:write(data)
+  fh:close()
+end
+
+function get_file_contents(lfn)
+  local me = 'getfc'
+  dlog(me, 'lfn: ', lfn)
+  local fh = io.open(lfn, "rb")
+  local data = fh:read('*all')
+  fh:close()
+  return data
+end
+
+function cwd()
+  return os.getenv('PWD')
+end
+
+function path_join(a, b)
+  return a .. '/' .. b
+end
+
 -- =============================
 
+local lfn = path_join(cwd(), "libcpp.so")
+local luaopen_libcpp = package.loadlib(lfn, "luaopen_libcpp")
+if luaopen_libcpp == nil then
+  print('Error opening shared library libcpp.so from: ', lfn)
+end
+
+assert(luaopen_libcpp ~= nil)
+local libcpp = luaopen_libcpp()
+
+function int_to_hex64(n)
+  return libcpp.int_to_hex64(n)
+end
+
+function is_bare_filename(fn)
+  return libcpp.fs_has_root_path(fn) == 0
+end
+
+function file_size(fn)
+  return libcpp.fs_file_size(fn)
+end
+
+-- dn is a directory path.
+function space_in_dir(dn)
+  local si = libcpp.fs_space(dn)
+  if si then return si.available else return nil end
+
+  function test_00()
+    x = libcpp.fs_space("/var")
+    print(x.available)
+    for k, v in pairs(x) do
+      print('k: ', k, ' v: ', v)
+    end
+  end
+end
+
 local M = {}
+M.libcpp = libcpp
+M.cpp = libcpp
 M.dlog_snippet = dlog_snippet
 M.rep = rep
 M.dlog = dlog
@@ -756,4 +874,12 @@ M.dlog2 = dlog2
 M.dlog4 = dlog4
 M.dlog6 = dlog6
 M.dlog8 = dlog8
+M.printt = printt
+M.serialize = serialize
+M.set_file_contents = set_file_contents
+M.get_file_contents = get_file_contents
+M.is_bare_filename = is_bare_filename
+M.int_to_hex64 = int_to_hex64
+M.file_size = file_size
+M.space_in_dir = space_in_dir
 return M

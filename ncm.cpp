@@ -2,6 +2,9 @@
 #include <fstream>
 #include <filesystem>
 #include <cstdint>
+#include <string>
+
+using std::string;
 
 #if 0
 #define FMT_HEADER_ONLY
@@ -92,6 +95,43 @@ int ncm_fs_file_size(lua_State* L) {
   return 1;
 }
 
+int ncm_fs_has_root_path(lua_State* L) {
+  using std::filesystem::path;
+
+  const char *pn = lua_tostring(L, 1);  // any path.
+  if (pn == 0) return 0;
+
+  const bool l = path(pn).has_root_path();
+
+  lua_pushinteger(L, l);
+
+  return 1;
+}
+
+int ncm_fs_root_path(lua_State* L) {
+  using std::filesystem::path;
+
+  const char *pn = lua_tostring(L, 1);  // any path.
+  if (pn == 0) return 0;
+
+  const string s = path(pn).root_path();
+  lua_pushstring(L, s.c_str());
+
+  return 1;
+}
+
+int ncm_fs_filename(lua_State* L) {
+  using std::filesystem::path;
+
+  const char *pn = lua_tostring(L, 1);  // any path.
+  if (pn == 0) return 0;
+
+  const string s = path(pn).filename();
+  lua_pushstring(L, s.c_str());
+
+  return 1;
+}
+
 int ncm_int_to_hex64(lua_State* L) {
   lua_Integer n = lua_tointeger(L, 1);
   lua_pushstring(L, int_to_hex64(n).c_str());
@@ -135,6 +175,9 @@ const struct luaL_Reg regns [] = {
   {"fs_space", ncm_fs_space},
   {"fs_hash_value", ncm_fs_hash_value},
   {"fs_file_size", ncm_fs_file_size},
+  {"fs_has_root_path", ncm_fs_has_root_path},
+  {"fs_root_path", ncm_fs_root_path},
+  {"fs_filename", ncm_fs_filename},
   {"int_to_hex64", ncm_int_to_hex64},
   {"create_new_file", ncm_create_new_file},
   {NULL, NULL}  /* sentinel */

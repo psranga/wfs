@@ -120,9 +120,42 @@ int fs_filename(lua_State* L) {
   return 1;
 }
 
-int cpp_int_to_hex64(lua_State* L) {
+int int_to_hex64(lua_State* L) {
   lua_Integer n = lua_tointeger(L, 1);
-  lua_pushstring(L, int_to_hex64(n).c_str());
+  lua_pushstring(L, internal::int_to_hex64(n).c_str());
+  return 1;
+}
+
+int create_new_file(lua_State* L) {
+  char buf[4096];
+
+  const char* block_fn = lua_tostring(L, 1);
+  std::size_t csz = lua_tointeger(L, 2);
+
+  // TODO: error if the file exists.
+  std::error_code ec;
+  const auto not_found_status =
+    std::filesystem::file_status(std::filesystem::file_type::not_found);
+  const auto fstatus = std::filesystem::status(block_fn, ec);
+  if (fstatus != not_found_status) return 0;
+
+  auto ofs = std::ofstream(block_fn);
+  std::size_t n = 0;
+
+  while (n < csz) {
+    std::size_t w = csz - n;
+    if (w > sizeof buf) {
+      w = sizeof buf;
+    }
+    if (!ofs) break;
+    ofs.write(buf, w);
+    if (!ofs) break;
+    n += w;
+  }
+
+  ofs.close();
+
+  lua_pushinteger(L, n);
   return 1;
 }
 
@@ -133,13 +166,14 @@ const struct luaL_Reg regns [] = {
   {"fs_has_root_path", fs_has_root_path},
   {"fs_root_path", fs_root_path},
   {"fs_filename", fs_filename},
-  {"cpp_int_to_hex64", cpp_int_to_hex64},
+  {"int_to_hex64", int_to_hex64},
+  {"create_new_file", create_new_file},
   {NULL, NULL}  /* sentinel */
 };
 
 } // namespace libcpp
 
-extern "C" int luaopen_ncmcpp (lua_State *L) {
+extern "C" int luaopen_libcpp (lua_State *L) {
   lua_newtable(L);
   luaL_setfuncs(L, libcpp::regns, 0);
   return 1;
