@@ -18,13 +18,13 @@ build out/libcpp.so: cc12 libcpp.cpp
 build out/00init.log: mkdirout
 build init: phony out/00init.log
 
-build out/testlcm.log: run_lua init testlcm.lua libcpp.so
+build out/testlcm.log: run_lua init testlcm.lua out/libcpp.so
   fn = testlcm.lua
 
-build out/testwfs.log: run_lua init testwfs.lua libcpp.so
+build out/testwfs.log: run_lua init testwfs.lua out/libcpp.so
   fn = testwfs.lua
 
-build out/adhoc.log: run_lua init adhoc.lua libcpp.so
+build out/adhoc.log: run_lua init adhoc.lua out/libcpp.so
   fn = adhoc.lua
 
 default init out/testlcm.log out/testwfs.log out/adhoc.log
