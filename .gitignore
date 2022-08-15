@@ -5,12 +5,15 @@ out
 x
 y
 z
+x.*
+y.*
+z.*
 
 # 'e' is the standard filename I use to send the logs from failing tests
 # e.g., somecmd 2>&1 | tee e
 e
 
-.ninja.log
+.ninja_log
 a.out
 *.so
 *.swp
